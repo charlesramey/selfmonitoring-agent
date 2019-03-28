@@ -38,15 +38,29 @@ class CustomRNN(nn.Module):
     def _forward_rnn(cell, input_, mask, hx):
         max_time = input_.size(0)
         output = []
-        for time in range(max_time):
-            h_next, c_next = cell(input_[time], hx=hx)
-            mask_ = mask[time].unsqueeze(1).expand_as(h_next)
-            h_next = h_next*mask_ + hx[0]*(1 - mask_)
-            c_next = c_next*mask_ + hx[1]*(1 - mask_)
-            hx_next = (h_next, c_next)
-            output.append(h_next)
-            hx = hx_next
+        print("Inside of _forward_rnn")
+        print("str(cell): %s" %str(type(cell)))
+        if 'GRU' in str(type(cell)):
+            print("HERE")
+            for time in range(max_time):
+                if time == 0:
+                    hx = hx[0]
+                h_next = cell(input_[time], hx=hx)
+                mask_ = mask[time].unsqueeze(1).expand_as(h_next)
+                h_next = h_next*mask_ + hx[0]*(1 - mask_)
+                output.append(h_next)
+                hx = h_next
+        if 'LSTM' in str(type(cell)):
+            for time in range(max_time):
+                h_next, c_next = cell(input_[time], hx=hx)
+                mask_ = mask[time].unsqueeze(1).expand_as(h_next)
+                h_next = h_next*mask_ + hx[0]*(1 - mask_)
+                c_next = c_next*mask_ + hx[1]*(1 - mask_)
+                hx_next = (h_next, c_next)
+                output.append(h_next)
+                hx = hx_next
         output = torch.stack(output, 0)
+        print(hx)
         return output, hx
 
     def forward(self, input_, mask, hx=None):
@@ -61,14 +75,27 @@ class CustomRNN(nn.Module):
         h_n = []
         c_n = []
         layer_output = None
-        for layer in range(self.num_layers):
-            cell = self.get_cell(layer)
-            layer_output, (layer_h_n, layer_c_n) = CustomRNN._forward_rnn(
-                cell=cell, input_=input_, mask=mask, hx=hx)
-            input_ = self.dropout_layer(layer_output)
-            h_n.append(layer_h_n)
-            c_n.append(layer_c_n)
-        output = layer_output
-        h_n = torch.stack(h_n, 0)
-        c_n = torch.stack(c_n, 0)
-        return output, (h_n, c_n)
+        #print("inside of forward")
+        #print("str(self.cell_class): %s" %str(self.cell_class))
+        if 'GRU' in str(self.cell_class):
+            for layer in range(self.num_layers):
+                cell = self.get_cell(layer)
+                layer_output, layer_h_n = CustomRNN._forward_rnn(
+                    cell=cell, input_=input_, mask=mask, hx=hx)
+                input_ = self.dropout_layer(layer_output)
+                h_n.append(layer_h_n)
+            output = layer_output
+            h_n = torch.stack(h_n, 0)
+            return output, h_n
+        if 'LSTM' in str(self.cell_class):
+            for layer in range(self.num_layers):
+                cell = self.get_cell(layer)
+                layer_output, (layer_h_n, layer_c_n) = CustomRNN._forward_rnn(
+                    cell=cell, input_=input_, mask=mask, hx=hx)
+                input_ = self.dropout_layer(layer_output)
+                h_n.append(layer_h_n)
+                c_n.append(layer_c_n)
+            output = layer_output
+            h_n = torch.stack(h_n, 0)
+            c_n = torch.stack(c_n, 0)
+            return output, (h_n, c_n)

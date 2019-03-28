@@ -275,8 +275,11 @@ class PanoSeq2SeqAgent(PanoBaseAgent):
         batch_size = len(obs)
 
         seq, seq_lengths = super(PanoSeq2SeqAgent, self)._sort_batch(obs)
-
-        ctx, h_t, c_t, ctx_mask = self.encoder(seq, seq_lengths)
+        print(self.encoder)
+        if 'GRU' in str(type(self.encoder.rnn.cell_0)):
+            ctx, h_t, ctx_mask = self.encoder(seq, seq_lengths)
+        else: 
+            ctx, h_t, c_t, ctx_mask = self.encoder(seq, seq_lengths)
         question = h_t
 
         if self.opts.arch == 'progress_aware_marker' or self.opts.arch == 'iclr_marker':
@@ -302,10 +305,15 @@ class PanoSeq2SeqAgent(PanoBaseAgent):
             target = torch.LongTensor(target_index).to(self.device)
 
             # forward pass the network
-            h_t, c_t, pre_ctx_attend, img_attn, ctx_attn, logit, value, navigable_mask = self.model(
-                pano_img_feat, navigable_feat, pre_feat, question, h_t, c_t, ctx,
-                pre_ctx_attend, navigable_index, ctx_mask)
+            if 'GRU' in str(type(self.encoder.rnn.cell_0)):
+                h_t, pre_ctx_attend, img_attn, ctx_attn, logit, value, navigable_mask = self.model(
+                    pano_img_feat, navigable_feat, pre_feat, question, h_t, None, ctx,
+                    pre_ctx_attend, navigable_index, ctx_mask)
 
+            else:
+                h_t, c_t, pre_ctx_attend, img_attn, ctx_attn, logit, value, navigable_mask = self.model(
+                    pano_img_feat, navigable_feat, pre_feat, question, h_t, c_t, ctx,
+                    pre_ctx_attend, navigable_index, ctx_mask)
             # set other values to -inf so that logsoftmax will not affect the final computed loss
             logit.data.masked_fill_((navigable_mask == 0).data, -float('inf'))
             current_logit_loss = self.criterion(logit, target)

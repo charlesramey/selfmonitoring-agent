@@ -103,7 +103,7 @@ parser.add_argument('--remove_punctuation', default=0, type=int,
                          'we provide an option here.')
 parser.add_argument('--reversed', default=1, type=int,
                     help='option for reversing the sentence during encoding')
-parser.add_argument('--lang_embed', default='lstm', type=str, help='options: lstm ')
+parser.add_argument('--lang_embed', default='lstm', type=str, help='options: lstm, gru ')
 parser.add_argument('--word_embedding_size', default=256, type=int,
                     help='default embedding_size for language encoder')
 parser.add_argument('--rnn_hidden_size', default=256, type=int)
@@ -165,10 +165,11 @@ def main(opts):
     print('Using {} as encoder ...'.format(opts.lang_embed))
     if 'lstm' in opts.lang_embed:
         encoder = EncoderRNN(**encoder_kwargs)
+    elif 'gru' in opts.lang_embed:
+        encoder = EncoderRNN(**encoder_kwargs)
     else:
         raise ValueError('Unknown {} language embedding'.format(opts.lang_embed))
     print(encoder)
-
     # create policy model
     policy_model_kwargs = {
         'opts':opts,
