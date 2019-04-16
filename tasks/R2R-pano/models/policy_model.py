@@ -33,8 +33,13 @@ class SelfMonitoring(nn.Module):
         self.soft_attn = SoftAttention()
 
         self.dropout = nn.Dropout(p=rnn_dropout)
-
-        self.lstm = nn.LSTMCell(img_fc_dim[-1] * 2 + rnn_hidden_size, rnn_hidden_size)
+        
+        if opts.lang_embed == 'gru':
+        	self.lstm = nn.GRUCell(img_fc_dim[-1] * 2 + rnn_hidden_size, rnn_hidden_size)
+        	self.cell = 'GRU'
+        else:
+            self.lstm = nn.LSTMCell(img_fc_dim[-1] * 2 + rnn_hidden_size, rnn_hidden_size)
+            self.cell = 'LSTM'
 
         self.lang_position = PositionalEncoding(rnn_hidden_size, dropout=0.1, max_len=max_len)
 
@@ -84,9 +89,12 @@ class SelfMonitoring(nn.Module):
 
         # merge info into one LSTM to be carry through time
         concat_input = torch.cat((proj_pre_feat, weighted_img_feat, weighted_ctx), 1)
-
-        h_1, c_1 = self.lstm(concat_input, (h_0, c_0))
-        h_1_drop = self.dropout(h_1)
+        if self.cell == 'GRU':
+        	h_1 = self.lstm(concat_input, h_0)
+        	h_1_drop = self.dropout(h_1)
+        if self.cell == 'LSTM':
+            h_1, c_1 = self.lstm(concat_input, (h_0, c_0))
+            h_1_drop = self.dropout(h_1)
 
         # policy network
         h_tilde = self.logit_fc(torch.cat((weighted_ctx, h_1_drop), dim=1))
@@ -94,8 +102,11 @@ class SelfMonitoring(nn.Module):
 
         # value estimation
         concat_value_input = self.h2_fc_lstm(torch.cat((h_0, weighted_img_feat), 1))
-
-        h_1_value = self.dropout(torch.sigmoid(concat_value_input) * torch.tanh(c_1))
+        if self.cell == 'GRU':
+            h_1_value = self.dropout(torch.sigmoid(concat_value_input))
+            c_1 = None
+        if self.cell == 'LSTM':
+            h_1_value = self.dropout(torch.sigmoid(concat_value_input) * torch.tanh(c_1))
 
         value = self.critic(torch.cat((ctx_attn, h_1_value), dim=1))
 

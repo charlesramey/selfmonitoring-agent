@@ -38,10 +38,10 @@ class CustomRNN(nn.Module):
     def _forward_rnn(cell, input_, mask, hx):
         max_time = input_.size(0)
         output = []
-        print("Inside of _forward_rnn")
-        print("str(cell): %s" %str(type(cell)))
+        #print("Inside of _forward_rnn")
+        #print("str(cell): %s" %str(type(cell)))
         if 'GRU' in str(type(cell)):
-            print("HERE")
+            #print("HERE")
             for time in range(max_time):
                 if time == 0:
                     hx = hx[0]

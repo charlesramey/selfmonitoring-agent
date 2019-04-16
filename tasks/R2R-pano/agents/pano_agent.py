@@ -275,7 +275,7 @@ class PanoSeq2SeqAgent(PanoBaseAgent):
         batch_size = len(obs)
 
         seq, seq_lengths = super(PanoSeq2SeqAgent, self)._sort_batch(obs)
-        print(self.encoder)
+        #print(self.encoder)
         if 'GRU' in str(type(self.encoder.rnn.cell_0)):
             ctx, h_t, ctx_mask = self.encoder(seq, seq_lengths)
         else: 
@@ -306,9 +306,11 @@ class PanoSeq2SeqAgent(PanoBaseAgent):
 
             # forward pass the network
             if 'GRU' in str(type(self.encoder.rnn.cell_0)):
-                h_t, pre_ctx_attend, img_attn, ctx_attn, logit, value, navigable_mask = self.model(
+                h_t, c_t, pre_ctx_attend, img_attn, ctx_attn, logit, value, navigable_mask = self.model(
                     pano_img_feat, navigable_feat, pre_feat, question, h_t, None, ctx,
                     pre_ctx_attend, navigable_index, ctx_mask)
+                #print(self.model(pano_img_feat, navigable_feat, pre_feat, question, h_t, None, ctx,
+                #           pre_ctx_attend, navigable_index, ctx_mask))
 
             else:
                 h_t, c_t, pre_ctx_attend, img_attn, ctx_attn, logit, value, navigable_mask = self.model(
