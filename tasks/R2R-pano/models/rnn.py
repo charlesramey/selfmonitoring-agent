@@ -60,7 +60,7 @@ class CustomRNN(nn.Module):
                 output.append(h_next)
                 hx = hx_next
         output = torch.stack(output, 0)
-        print(hx)
+        #print(hx)
         return output, hx
 
     def forward(self, input_, mask, hx=None):
