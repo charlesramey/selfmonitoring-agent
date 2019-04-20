@@ -16,6 +16,9 @@ class CustomRNN(nn.Module):
         self.num_layers = num_layers
         self.use_bias = use_bias
         self.batch_first = batch_first
+        
+        self.conv1 = nn.Conv2d(1, 1, (3,1), padding=(1,0))
+        self.conv2 = nn.Conv2d(1, 1, (3,1), padding=(1,0))
 
         for layer in range(num_layers):
             layer_input_size = input_size if layer == 0 else hidden_size
@@ -77,6 +80,12 @@ class CustomRNN(nn.Module):
         layer_output = None
         #print("inside of forward")
         #print("str(self.cell_class): %s" %str(self.cell_class))
+        size = input_.size()
+        input_ = input_.transpose(1,0).unsqueeze(1)
+        c1 = self.conv1(input_)
+        c2 = self.conv2(input_)
+        input_ = input_ + c1 + c2
+        input_ = input_.squeeze(1).transpose(1,0)
         if 'GRU' in str(self.cell_class):
             for layer in range(self.num_layers):
                 cell = self.get_cell(layer)
