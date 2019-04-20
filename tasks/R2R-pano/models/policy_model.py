@@ -37,6 +37,9 @@ class SelfMonitoring(nn.Module):
         if opts.lang_embed == 'gru':
         	self.lstm = nn.GRUCell(img_fc_dim[-1] * 2 + rnn_hidden_size, rnn_hidden_size)
         	self.cell = 'GRU'
+    	elif opts.lang_embed == 'conv':
+            self.lstm = nn.LSTMCell(img_fc_dim[-1] * 2 + rnn_hidden_size, rnn_hidden_size)
+            self.cell = 'CONV'
         else:
             self.lstm = nn.LSTMCell(img_fc_dim[-1] * 2 + rnn_hidden_size, rnn_hidden_size)
             self.cell = 'LSTM'
@@ -45,6 +48,7 @@ class SelfMonitoring(nn.Module):
 
         self.logit_fc = nn.Linear(rnn_hidden_size * 2, img_fc_dim[-1])
         self.h2_fc_lstm = nn.Linear(rnn_hidden_size + img_fc_dim[-1], rnn_hidden_size, bias=fc_bias)
+
 
         if opts.monitor_sigmoid:
             self.critic = nn.Sequential(
