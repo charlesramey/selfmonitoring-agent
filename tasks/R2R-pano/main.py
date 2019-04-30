@@ -252,7 +252,7 @@ def main(opts):
 
     # setup trainer
     trainer = PanoSeq2SeqTrainer(opts, agent, optimizer, opts.train_iters_epoch)
-
+    print("Model Memory Size on GPU: %d" %(torch.cuda.memory_allocated(device=None)))
     if opts.eval_beam or opts.eval_only:
         success_rate = []
         for val_env in val_envs.items():
