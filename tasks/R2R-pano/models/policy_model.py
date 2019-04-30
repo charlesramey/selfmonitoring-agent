@@ -35,9 +35,9 @@ class SelfMonitoring(nn.Module):
         self.dropout = nn.Dropout(p=rnn_dropout)
         
         if opts.lang_embed == 'gru':
-        	self.lstm = nn.GRUCell(img_fc_dim[-1] * 2 + rnn_hidden_size, rnn_hidden_size)
-        	self.cell = 'GRU'
-    	elif opts.lang_embed == 'conv':
+            self.lstm = nn.GRUCell(img_fc_dim[-1] * 2 + rnn_hidden_size, rnn_hidden_size)
+            self.cell = 'GRU'
+        elif opts.lang_embed == 'conv':
             self.lstm = nn.LSTMCell(img_fc_dim[-1] * 2 + rnn_hidden_size, rnn_hidden_size)
             self.cell = 'CONV'
         else:
@@ -94,8 +94,8 @@ class SelfMonitoring(nn.Module):
         # merge info into one LSTM to be carry through time
         concat_input = torch.cat((proj_pre_feat, weighted_img_feat, weighted_ctx), 1)
         if self.cell == 'GRU':
-        	h_1 = self.lstm(concat_input, h_0)
-        	h_1_drop = self.dropout(h_1)
+            h_1 = self.lstm(concat_input, h_0)
+            h_1_drop = self.dropout(h_1)
         if self.cell == 'LSTM':
             h_1, c_1 = self.lstm(concat_input, (h_0, c_0))
             h_1_drop = self.dropout(h_1)
