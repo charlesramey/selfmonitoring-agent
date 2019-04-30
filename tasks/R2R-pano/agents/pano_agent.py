@@ -281,7 +281,9 @@ class PanoSeq2SeqAgent(PanoBaseAgent):
         else: 
             ctx, h_t, c_t, ctx_mask = self.encoder(seq, seq_lengths)
         question = h_t
-
+        #print(len(seq_lengths))
+        seq_len = torch.FloatTensor(seq_lengths)
+        accuracies = []
         if self.opts.arch == 'progress_aware_marker' or self.opts.arch == 'iclr_marker':
             pre_feat = torch.zeros(batch_size, self.opts.img_feat_input_dim + self.opts.tiled_len).to(self.device)
         else:
@@ -321,7 +323,8 @@ class PanoSeq2SeqAgent(PanoBaseAgent):
             current_logit_loss = self.criterion(logit, target)
             # select action based on prediction
             action = super(PanoSeq2SeqAgent, self)._select_action(logit, ended, fix_action_ended=self.opts.fix_action_ended)
-
+            #print(len(action))
+            accuracies.append(action == target.cpu())
             if not self.opts.test_submission:
                 if step == 0:
                     current_loss = current_logit_loss
@@ -347,13 +350,19 @@ class PanoSeq2SeqAgent(PanoBaseAgent):
             # save trajectory output and update last_recorded
             traj, last_recorded = self.update_traj(obs, traj, img_attn, ctx_attn, value, next_viewpoint_idx,
                                                    navigable_index, ended, last_recorded)
-
+            #print(traj)
             pre_feat = navigable_feat[torch.LongTensor(range(batch_size)), action,:]
 
             # Early exit if all ended
             if last_recorded.all():
                 break
-
+        #print(seq_len.size())
+        accuracies = torch.stack(accuracies).type(torch.FloatTensor )
+        #print(seq_len.unsqueeze(0).size())
+        #print(accuracies.size())
+        #print(torch.cat((seq_len.unsqueeze(0), accuracies), dim = 0))
+        seq_len_accuracy = torch.cat((seq_len.unsqueeze(0), accuracies), dim = 0)
+        torch.save(seq_len_accuracy, 'seq_len_accuracy_conv.pt')  # To view, run: torch.load('seq_len_accuracy_<EXP_NAME>.pt')
         self.dist_from_goal = [traj_tmp['distance'][-1] for traj_tmp in traj]
 
         return loss, traj
