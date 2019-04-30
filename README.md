@@ -1,6 +1,7 @@
 ## GRU Experimental Branch for: Self-Monitoring Navigation Agent for Vision-and-Language Navigation
 In this branch I have made modifications to several files for incorporating GRU cells into the existing model's architecture.
 There are also changes made for outputing the accuracy during testing to compare performance versus instruction length.    
+  
 Modified Files:  
   * tasks/R2R-pano/models/encoder.py  
     * The \__init\__ and forward methods were modified to include GRU cells. 
